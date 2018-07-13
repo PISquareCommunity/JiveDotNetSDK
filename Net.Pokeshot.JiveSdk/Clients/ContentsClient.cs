@@ -95,16 +95,16 @@ namespace Net.Pokeshot.JiveSdk.Clients
 
             return results["list"].ToObject<List<AbuseReport>>();
         }
-       
+
         /// <summary>
-         /// Return a paginated list of the possible OutcomeTypes for the children of the specified object.
-         /// </summary>
-         /// <param name="contentID">ID of the content object's children to get the outcome types for</param>
-         /// <param name="isCreate">Is list of types for create or view</param>
-         /// <param name="startIndex">Zero-relative index of the first outcome type to be returned</param>
-         /// <param name="count">Maximum number of outcome types to be returned</param>
-         /// <param name="fields">Fields to be returned on outcome types</param>
-         /// <returns>OutcomeType[] listing the outcome types who like the specified comment</returns>
+        /// Return a paginated list of the possible OutcomeTypes for the children of the specified object.
+        /// </summary>
+        /// <param name="contentID">ID of the content object's children to get the outcome types for</param>
+        /// <param name="isCreate">Is list of types for create or view</param>
+        /// <param name="startIndex">Zero-relative index of the first outcome type to be returned</param>
+        /// <param name="count">Maximum number of outcome types to be returned</param>
+        /// <param name="fields">Fields to be returned on outcome types</param>
+        /// <returns>OutcomeType[] listing the outcome types who like the specified comment</returns>
         public List<OutcomeType> GetChildOutComeTypes(int contentID, bool isCreate = true, int startIndex = 0, int count = 25, List<string> fields = null)
         {
             List<OutcomeType> outcomeList = new List<OutcomeType>();
@@ -189,7 +189,8 @@ namespace Net.Pokeshot.JiveSdk.Clients
                 tmp = (DateTime)updated;
                 url += "&updated=" + jiveDateFormat(tmp);
             }
-            if (fields != null && fields.Count > 0) {
+            if (fields != null && fields.Count > 0)
+            {
                 url += "&fields=";
                 foreach (var field in fields)
                 {
@@ -389,8 +390,11 @@ namespace Net.Pokeshot.JiveSdk.Clients
         /// <returns></returns>
         public string DestroyContent(int contentID, bool hardDelete = false)
         {
-            string url = contentUrl + "/" + contentID.ToString();
-            url += "?hardDelete=" + hardDelete.ToString();
+            string url = contentUrl + "/" + contentID.ToString() +"hardDelete=false";
+            if (hardDelete == true)
+            {
+                url += "?hardDelete=" + hardDelete.ToString();
+            }
 
             string checkString = "";
             try
@@ -399,7 +403,8 @@ namespace Net.Pokeshot.JiveSdk.Clients
             }
             catch (HttpException e)
             {
-                switch (e.GetHttpCode()){
+                switch (e.GetHttpCode())
+                {
                     case 400:
                         throw new HttpException(e.WebEventCode, "An input field is malformed", e);
                     case 403:
@@ -1451,6 +1456,123 @@ namespace Net.Pokeshot.JiveSdk.Clients
             //parses the result into a GenericContent object and returns it to the user
             JObject Json = JObject.Parse(result);
             return Json.ToObject<GenericContent>();
+        }
+        public List<int> GetDeletedContentIds(List<int> syncedPIContentIds)
+        {
+            string url = contentUrl + "/";
+            string[] keys = new string[] { };
+            List<int> deletedContentIds = new List<int>();
+            int numOfContentMarkedAsDeleted = 0;
+            int numOfContentMissing = 0;
+            int totalNumOfContentDeleted = 0;
+            string strNumOfContentMarkedAsDeleted = "Number of content marked as deleted: ";
+            string strNumOfContentMissing = "Number of Content missing: ";
+            string strTotalNumOfContentDeleted = "Total number of deleted content found: ";
+
+            foreach (int contentId in syncedPIContentIds)
+            {
+                url = contentUrl + "/";
+                url += contentId.ToString();
+                string json;
+                try
+                {
+                    json = GetAbsolute(url);
+                    JObject results = JObject.Parse(json);
+                    GenericContent gcresults = results.ToObject<GenericContent>();
+                    if (gcresults.status == "deleted")
+                    {
+                        deletedContentIds.Add(contentId);
+                        numOfContentMarkedAsDeleted++;
+                    }
+                }
+                catch (HttpException e)
+                {
+                    switch (e.GetHttpCode())
+                    {
+                        case 400:
+                            Console.WriteLine("An input field is malformed");
+                            break;
+                        case 403:
+                            Console.WriteLine("You are not allowed to access the specified content object");
+                            break;
+                        case 404:
+                            numOfContentMissing++;
+                            deletedContentIds.Add(contentId);
+                            break;
+                        default:
+                            throw;
+                    }
+                }
+            }
+            totalNumOfContentDeleted = numOfContentMissing + numOfContentMarkedAsDeleted;
+            Console.WriteLine(strNumOfContentMarkedAsDeleted + numOfContentMarkedAsDeleted);
+            Console.WriteLine(strNumOfContentMissing + numOfContentMissing);
+            Console.WriteLine(strTotalNumOfContentDeleted + totalNumOfContentDeleted);
+            Console.WriteLine("List Of content Ids from PI that are consisdered deleted:");
+            foreach (var contentid in deletedContentIds)
+                Console.WriteLine(contentid);
+
+            return deletedContentIds;
+        }
+        public List<int> GetDeletedCommentIds(List<int> syncedPICommentIds)
+        {
+            List<int> listOfDeletedCommentIds = new List<int>();
+            List<Comment> commentList = new List<Comment>();
+            int numOfCommentsMarkedAsDeleted = 0;
+            int numOfCommentsMissing = 0;
+            int totalNumOfCommentsDeleted = 0;
+            string url = contentUrl;
+            string strNumOfCommentsMarkedAsDeleted = "Number of comments marked as deleted: ";
+            string strNumOfCommentsMissing = "Number of Comments missing: ";
+            string strTotalNumOfCommentsDeleted = "Total number of deleted comments found: ";
+            string json;
+            foreach (var commentId in syncedPICommentIds)
+            {
+                try
+                {
+
+                    url = JiveCommunityUrl + "/api/core/v3/comments/" + commentId.ToString();
+                    json = GetAbsolute(url);
+                    JObject results = JObject.Parse(json);
+
+                    Comment syncedComment = results.ToObject<Comment>();
+                    if (syncedComment.status == "deleted")
+                    {
+                        listOfDeletedCommentIds.Add(int.Parse(syncedComment.id));
+                        numOfCommentsMarkedAsDeleted++;
+                    }
+
+                }
+                catch (HttpException e)
+                {
+                    switch (e.GetHttpCode())
+                    {
+                        case 400:
+                            Console.WriteLine("An input field is malformed");
+                            break;
+                        case 403:
+                            Console.WriteLine($"You are not allowed to access the specified comment object with id: {commentId}");
+                            listOfDeletedCommentIds.Add(commentId);
+                            numOfCommentsMissing++;
+                            break;
+                        case 404:
+                            listOfDeletedCommentIds.Add(commentId);
+                            numOfCommentsMissing++;
+
+                            break;
+                        default:
+                            throw;
+                    }
+                }
+            }
+            totalNumOfCommentsDeleted = numOfCommentsMissing + numOfCommentsMarkedAsDeleted;
+            Console.WriteLine(strNumOfCommentsMarkedAsDeleted + numOfCommentsMarkedAsDeleted);
+            Console.WriteLine(strNumOfCommentsMissing + numOfCommentsMissing);
+            Console.WriteLine(strTotalNumOfCommentsDeleted + totalNumOfCommentsDeleted);
+            Console.WriteLine("List Of comment Ids from PI that are consisdered deleted:");
+            foreach (var commentid in listOfDeletedCommentIds)
+                Console.WriteLine(commentid);
+            return listOfDeletedCommentIds;
         }
     }
 }
