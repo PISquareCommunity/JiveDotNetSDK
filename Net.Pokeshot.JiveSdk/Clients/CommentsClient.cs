@@ -280,11 +280,11 @@ namespace Net.Pokeshot.JiveSdk.Clients
         /// Delete the specified comment and its sub comments recursively
         /// </summary>
         /// <param name="commentID">ID of the comment to be deleted</param>
-        /// <param name="recursiveDelete">Flag indicating if the delete is recursive. The flag defaults to true if not provided</param>
+        /// <param name="recursiveDelete">Flag indicating if the delete is recursive. The flag defaults to false if not provided</param>
         public void DestroyComment(int commentID, bool recursiveDelete = false)
         {
             string url = commentUrl + "/" + commentID.ToString();
-            if (recursiveDelete == true)
+            if (recursiveDelete == true)//made the recusive delete default to false, so when syncing there won't be unintended consequences.
             {
                 url += "?recursiveDelete=" + recursiveDelete.ToString();
             }

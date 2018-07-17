@@ -47,7 +47,7 @@ namespace Net.Pokeshot.JiveSdk.Clients
                         throw;
                 }
             }
-
+            
             JObject Json = JObject.Parse(result);
             return Json.ToObject<AbuseReport>();
         }
@@ -1457,6 +1457,12 @@ namespace Net.Pokeshot.JiveSdk.Clients
             JObject Json = JObject.Parse(result);
             return Json.ToObject<GenericContent>();
         }
+        /// <summary>
+        /// This method takes a list of idea ids and runs them through a series of checks
+        /// to determine if they are deleted
+        /// </summary>
+        /// <param name="syncedPIContentIds">list of ids of Ideas</param>
+        /// <returns></returns>
         public List<int> GetDeletedContentIds(List<int> syncedPIContentIds)
         {
             string url = contentUrl + "/";
@@ -1496,6 +1502,7 @@ namespace Net.Pokeshot.JiveSdk.Clients
                             Console.WriteLine("You are not allowed to access the specified content object");
                             break;
                         case 404:
+                            //if content is not found, it is also considered deleted
                             numOfContentMissing++;
                             deletedContentIds.Add(contentId);
                             break;
@@ -1514,6 +1521,23 @@ namespace Net.Pokeshot.JiveSdk.Clients
 
             return deletedContentIds;
         }
+        /// <summary>
+        /// This method looks at all of the comments that we currently have synced and attempts
+        /// to find that comment on PISquare. If the status is set to deleted, missing or not authorized 
+        /// we assume that the comment is deleted.
+        /// 
+        /// Important Note: during my testing phase, I looked at each comment that we recieved the not authorized error on.
+        /// These comments were actually deleted from the site. So I am making the assumption that if the comment is our sync table,
+        /// that means it is in place 1025 (all things pi) with the uservoice tag and a category matching on in Uservoice and therefore
+        /// we should be authorized to query it. This assumption is only valid in the specific case we are using this method for. This method should not be used
+        /// if your intention is to find all deleted comments on the site.
+        /// 
+        /// The only reason we would get unauthorized in the case we are looking at, is if we are attempting to look at a comment 
+        /// that does not exist. This issue should be brought up with Jive. If there is a need to look for deleted items elsewhere, consider modifing the 
+        /// catch excpetion to not include non authorized items.
+        /// </summary>
+        /// <param name="syncedPICommentIds"></param>
+        /// <returns></returns>
         public List<int> GetDeletedCommentIds(List<int> syncedPICommentIds)
         {
             List<int> listOfDeletedCommentIds = new List<int>();
@@ -1551,6 +1575,7 @@ namespace Net.Pokeshot.JiveSdk.Clients
                             Console.WriteLine("An input field is malformed");
                             break;
                         case 403:
+                            //for this case, and why we are considering it deleted, refer to the method description
                             Console.WriteLine($"You are not allowed to access the specified comment object with id: {commentId}");
                             listOfDeletedCommentIds.Add(commentId);
                             numOfCommentsMissing++;
