@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using Net.Pokeshot.JiveSdk.Models.Dto;
 using System.Collections.Generic;
 using System;
@@ -82,11 +82,11 @@ namespace Net.Pokeshot.JiveSdk.Clients
                     }
                 }
                 JObject results = JObject.Parse(json);
-
-
+                
                 activityList.AddRange(results["list"].ToObject<List<JiveDEAActivityInstance>>());
-
-                if (results["paging"] == null || results["paging"]["next"] == null)
+                if (!results.ToString().Contains("paging"))
+                    throw new HttpException($"DESClient returned unexpected json, may be down. Invalid Json: {results.ToString()}");
+                else if (results["paging"] == null || results["paging"]["next"] == null)
                     break;
                 else
                     url = results["paging"]["next"].ToString();
