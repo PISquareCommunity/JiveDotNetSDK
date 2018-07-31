@@ -47,7 +47,7 @@ namespace Net.Pokeshot.JiveSdk.Clients
                         throw;
                 }
             }
-            
+
             JObject Json = JObject.Parse(result);
             return Json.ToObject<AbuseReport>();
         }
@@ -390,11 +390,12 @@ namespace Net.Pokeshot.JiveSdk.Clients
         /// <returns></returns>
         public string DestroyContent(int contentID, bool hardDelete = false)
         {
-            string url = contentUrl + "/" + contentID.ToString() +"hardDelete=false";
+            string url = contentUrl + "/" + contentID.ToString() + "?hardDelete=false";
             if (hardDelete == true)
             {
-                url += "?hardDelete=" + hardDelete.ToString();
+                url = contentUrl + "/" + contentID.ToString() + "?hardDelete=true";
             }
+
 
             string checkString = "";
             try
@@ -1468,13 +1469,6 @@ namespace Net.Pokeshot.JiveSdk.Clients
             string url = contentUrl + "/";
             string[] keys = new string[] { };
             List<int> deletedContentIds = new List<int>();
-            int numOfContentMarkedAsDeleted = 0;
-            int numOfContentMissing = 0;
-            int totalNumOfContentDeleted = 0;
-            string strNumOfContentMarkedAsDeleted = "Number of content marked as deleted: ";
-            string strNumOfContentMissing = "Number of Content missing: ";
-            string strTotalNumOfContentDeleted = "Total number of deleted content found: ";
-
             foreach (int contentId in syncedPIContentIds)
             {
                 url = contentUrl + "/";
@@ -1488,7 +1482,6 @@ namespace Net.Pokeshot.JiveSdk.Clients
                     if (gcresults.status == "deleted")
                     {
                         deletedContentIds.Add(contentId);
-                        numOfContentMarkedAsDeleted++;
                     }
                 }
                 catch (HttpException e)
@@ -1496,14 +1489,12 @@ namespace Net.Pokeshot.JiveSdk.Clients
                     switch (e.GetHttpCode())
                     {
                         case 400:
-                            Console.WriteLine("An input field is malformed");
-                            break;
+                            throw new HttpException(e.WebEventCode, "An input field is malformed", e);
                         case 403:
                             Console.WriteLine("You are not allowed to access the specified content object");
                             break;
                         case 404:
                             //if content is not found, it is also considered deleted
-                            numOfContentMissing++;
                             deletedContentIds.Add(contentId);
                             break;
                         default:
@@ -1511,14 +1502,6 @@ namespace Net.Pokeshot.JiveSdk.Clients
                     }
                 }
             }
-            totalNumOfContentDeleted = numOfContentMissing + numOfContentMarkedAsDeleted;
-            Console.WriteLine(strNumOfContentMarkedAsDeleted + numOfContentMarkedAsDeleted);
-            Console.WriteLine(strNumOfContentMissing + numOfContentMissing);
-            Console.WriteLine(strTotalNumOfContentDeleted + totalNumOfContentDeleted);
-            Console.WriteLine("List Of content Ids from PI that are consisdered deleted:");
-            foreach (var contentid in deletedContentIds)
-                Console.WriteLine(contentid);
-
             return deletedContentIds;
         }
         /// <summary>
@@ -1542,13 +1525,7 @@ namespace Net.Pokeshot.JiveSdk.Clients
         {
             List<int> listOfDeletedCommentIds = new List<int>();
             List<Comment> commentList = new List<Comment>();
-            int numOfCommentsMarkedAsDeleted = 0;
-            int numOfCommentsMissing = 0;
-            int totalNumOfCommentsDeleted = 0;
             string url = contentUrl;
-            string strNumOfCommentsMarkedAsDeleted = "Number of comments marked as deleted: ";
-            string strNumOfCommentsMissing = "Number of Comments missing: ";
-            string strTotalNumOfCommentsDeleted = "Total number of deleted comments found: ";
             string json;
             foreach (var commentId in syncedPICommentIds)
             {
@@ -1563,7 +1540,6 @@ namespace Net.Pokeshot.JiveSdk.Clients
                     if (syncedComment.status == "deleted")
                     {
                         listOfDeletedCommentIds.Add(int.Parse(syncedComment.id));
-                        numOfCommentsMarkedAsDeleted++;
                     }
 
                 }
@@ -1578,11 +1554,9 @@ namespace Net.Pokeshot.JiveSdk.Clients
                             //for this case, and why we are considering it deleted, refer to the method description
                             Console.WriteLine($"You are not allowed to access the specified comment object with id: {commentId}");
                             listOfDeletedCommentIds.Add(commentId);
-                            numOfCommentsMissing++;
                             break;
                         case 404:
                             listOfDeletedCommentIds.Add(commentId);
-                            numOfCommentsMissing++;
 
                             break;
                         default:
@@ -1590,13 +1564,6 @@ namespace Net.Pokeshot.JiveSdk.Clients
                     }
                 }
             }
-            totalNumOfCommentsDeleted = numOfCommentsMissing + numOfCommentsMarkedAsDeleted;
-            Console.WriteLine(strNumOfCommentsMarkedAsDeleted + numOfCommentsMarkedAsDeleted);
-            Console.WriteLine(strNumOfCommentsMissing + numOfCommentsMissing);
-            Console.WriteLine(strTotalNumOfCommentsDeleted + totalNumOfCommentsDeleted);
-            Console.WriteLine("List Of comment Ids from PI that are consisdered deleted:");
-            foreach (var commentid in listOfDeletedCommentIds)
-                Console.WriteLine(commentid);
             return listOfDeletedCommentIds;
         }
     }
