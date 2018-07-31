@@ -93,6 +93,53 @@ namespace Net.Pokeshot.JiveSdk.Clients
             }
             return activityList;
         }
+        public List<JiveDEAActivityInstance> GetLoginActivity(DateTime? before = null, DateTime? after = null)
+        {
+            // Jive's DES server seems to off by a few seconds. When making calls using before or after, if either is ahead of the Jive's server, we get a 400 Bad Request Error.
+            // For that reason, we push back the these values by 20 seconds. It should be noted that this is problem may get resolved later or not appear on certain clients.
+            // Still getting these errors every once in a while, so bumping up to 30 seconds
+            //so basically this is the url for getting the general api call  https:// api.jivesoftware.com/analytics/v2/export/activity?count=100&show-all=false&after=2018-05-18T14:00:00.000&before=2018-05-18T14:20:00.000&fields=actorID,actionObjectType,actionObjectId,timestamp&filter
+            before = before?.AddSeconds(-30);
+            after = after?.AddSeconds(-30);
+
+            List<JiveDEAActivityInstance> activityList = new List<JiveDEAActivityInstance>();
+
+            string url = _desUrl + "/activity/lasthour?filter=action(Login)";
+            // jive returns a paginated list, so we have to loop through all of the pages.
+            while (true)
+            {
+                string json;
+                try
+                {
+                    json = GetAbsolute(url, getAuthorization());
+                }
+                catch (HttpException e)
+                {
+                    switch (e.GetHttpCode())
+                    {
+                        case 400:
+                            throw new HttpException(e.WebEventCode, "An input field is missing or malformed", e);
+                        case 403:
+                            throw new HttpException(e.WebEventCode, "You are not allowed to access this", e);
+                        case 401: // If the token happens to have expired, try once more before giving up.
+                            json = retry(url);
+                            break;
+                        default:
+                            throw;
+                    }
+                }
+                JObject results = JObject.Parse(json);
+
+
+                activityList.AddRange(results["list"].ToObject<List<JiveDEAActivityInstance>>());
+
+                if (results["paging"] == null || results["paging"]["next"] == null)
+                    break;
+                else
+                    url = results["paging"]["next"].ToString();
+            }
+            return activityList;
+        }
 
         private string retry(string url, int numTries = 0)
         {
