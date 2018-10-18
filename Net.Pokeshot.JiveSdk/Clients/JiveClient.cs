@@ -227,7 +227,7 @@ namespace Net.Pokeshot.JiveSdk.Clients
                 requestMessage.Headers.Add("X-Jive-Run-As", "userid " + _imposter);
             }
 
-            requestMessage.Content = new StringContent(json, Encoding.UTF8, "application/json");
+            //requestMessage.Content = new StringContent(json, Encoding.UTF8, "application/json");
             HttpResponseMessage activityResponse = httpClient.SendAsync(requestMessage).Result;
 
             if (!activityResponse.IsSuccessStatusCode)
