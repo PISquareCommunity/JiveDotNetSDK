@@ -64,7 +64,7 @@ namespace Net.Pokeshot.JiveSdk.Clients
                 string json;
                 try
                 {
-                    json = GetAbsolute(url, getAuthorization());
+                    json = GetAbsolute(url, getAuthorization(true));
                 }
                 catch (HttpException e)
                 {
@@ -111,7 +111,7 @@ namespace Net.Pokeshot.JiveSdk.Clients
                 string json;
                 try
                 {
-                    json = GetAbsolute(url, getAuthorization());
+                    json = GetAbsolute(url, getAuthorization(true));
                 }
                 catch (HttpException e)
                 {
@@ -146,7 +146,7 @@ namespace Net.Pokeshot.JiveSdk.Clients
             int maxTry = 10;
             try
             {
-                return GetAbsolute(url, getAuthorization());
+                return GetAbsolute(url, getAuthorization(true));
             }
             catch (HttpException e)
             {
@@ -166,7 +166,7 @@ namespace Net.Pokeshot.JiveSdk.Clients
         /// Gets the Authorization needed for downloading data from the DES. This method is thread safe.
         /// </summary>
         /// <returns>string to be used as the authorization header for web request to the des.</returns>
-        private string getAuthorization() {
+        private string getAuthorization(bool collectingData = false) {
             string url = "https://api.jivesoftware.com/analytics/v1/auth/login?";
             url += "clientId=" + _clientId;
             url += "&clientSecret=" + _clientSecret;
@@ -175,7 +175,7 @@ namespace Net.Pokeshot.JiveSdk.Clients
             // The token expires after 30 minutes. However, if a new one is created, the old one quits working.
             if (!isValid(_token))
             {
-                _token = PostAbsolute(url, "");
+                _token = PostAbsolute(url, "", collectingData);
             }
             mut.ReleaseMutex();
 

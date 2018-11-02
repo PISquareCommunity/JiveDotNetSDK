@@ -200,7 +200,7 @@ namespace Net.Pokeshot.JiveSdk.Clients
         }
 
         //PostAbsolute takes its JSON content as a string, similar to the string returned by the GetAbsolute method
-        protected string PostAbsolute(string url, string json)
+        protected string PostAbsolute(string url, string json, bool collectingData = false)
         {
             HttpClientHandler jiveHandler = new HttpClientHandler();
 
@@ -227,7 +227,11 @@ namespace Net.Pokeshot.JiveSdk.Clients
                 requestMessage.Headers.Add("X-Jive-Run-As", "userid " + _imposter);
             }
 
-            //requestMessage.Content = new StringContent(json, Encoding.UTF8, "application/json");
+            // For now, requestMessage.Content needs to only be set when posting data (like when using UVSync).  Errors if it is set and collecting data (recoverContent).
+            // Consider using the url passed to determine if this is set, instead of a bool
+            if (!collectingData)
+                requestMessage.Content = new StringContent(json, Encoding.UTF8, "application/json");
+
             HttpResponseMessage activityResponse = httpClient.SendAsync(requestMessage).Result;
 
             if (!activityResponse.IsSuccessStatusCode)
