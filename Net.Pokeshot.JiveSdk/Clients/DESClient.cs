@@ -22,8 +22,8 @@ namespace Net.Pokeshot.JiveSdk.Clients
             _clientSecret = clientSecret;
         }
 
-        public List<JiveDEAActivityInstance> GetActivity(List<string> filter = null, int count = 100, List<string> fields = null, DateTime? before = null, DateTime? after = null,
-            bool showAll = false)
+        public List<JiveDEAActivityInstance> GetActivity(List<string> filter = null, int count = 100, List<string> fields = null, 
+                                                         DateTime? before = null, DateTime? after = null, bool showAll = false)
         {
             // Jive's DES server seems to off by a few seconds. When making calls using before or after, if either is ahead of the Jive's server, we get a 400 Bad Request Error.
             // For that reason, we push back the these values by 20 seconds. It should be noted that this is problem may get resolved later or not appear on certain clients.
@@ -170,7 +170,7 @@ namespace Net.Pokeshot.JiveSdk.Clients
             string url = "https://api.jivesoftware.com/analytics/v1/auth/login?";
             url += "clientId=" + _clientId;
             url += "&clientSecret=" + _clientSecret;
-
+            
             mut.WaitOne();
             // The token expires after 30 minutes. However, if a new one is created, the old one quits working.
             if (!isValid(_token))
