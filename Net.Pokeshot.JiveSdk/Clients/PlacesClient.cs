@@ -670,7 +670,64 @@ namespace Net.Pokeshot.JiveSdk.Clients
             return Json.ToObject<Category>();
         }
 
-        //GetPlaceFollowers()
+        /// <summary>
+        /// Get the followers of a place. Groups have members and spaces have followers
+        /// </summary>
+        /// <param name="placeId"> placeId to get </param>
+        /// <param name="count"> Number of followers to get, typically you will get all of them</param>
+        /// <param name="startIndex"> Follower to start on </param>
+        /// <param name="fields"> Any fields to delimit response by </param>
+        /// <returns> A list of Jive_Person </returns>
+        public List<string> GetPlaceFollowers(int placeId, int count = 50, int startIndex = 0, List<string> fields = null )
+        {
+            List<string> Followers = new List<string>( );
+            string url = string.Copy( placesUrl ) + "/" + placeId + "/followers?count=50";
+            string jsonResponse;
+            JObject Response;
+            List<JToken> People = new List<JToken>();
+            bool HasNext = true;
+            while ( HasNext )
+            {
+                try
+                {
+                    jsonResponse = GetAbsolute( url );
+                    Response = JObject.Parse( jsonResponse );
+                    People = Response["list"].ToList();
+
+                }
+                catch ( HttpException e )
+                {
+                    //Error handling
+                    switch ( e.GetHttpCode( ) )
+                    {
+                        case 400:
+                            throw new HttpException( e.WebEventCode, "An input field is malformed", e );
+                        case 403:
+                            throw new HttpException( e.WebEventCode, "You are not allowed to access this place", e );
+                        case 404:
+                            throw new HttpException( e.WebEventCode, "The specified place does not exist", e );
+                        default:
+                            throw;
+                    }
+                }
+
+                foreach(JToken person in People)
+                {
+                    Followers.Add( person["id"].ToString() );                    
+                }
+                
+                if ( Response["links"] == null || Response["links"]["next"] == null )
+                    HasNext = false;
+                else
+                    url = Response["links"]["next"].ToString( );
+
+            }
+            
+            
+
+            return Followers;
+
+        }
         //GetPlaceFollowingIn()
         //GetPlacePermissions()
 
