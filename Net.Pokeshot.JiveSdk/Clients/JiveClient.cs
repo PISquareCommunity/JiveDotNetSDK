@@ -112,6 +112,12 @@ namespace Net.Pokeshot.JiveSdk.Clients
             jiveHandler.Credentials = _credential;
             jiveHandler.PreAuthenticate = true;
             jiveHandler.UseDefaultCredentials = true;
+			
+			ServicePointManager.Expect100Continue = true;
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls
+                   | SecurityProtocolType.Tls11
+                   | SecurityProtocolType.Tls12
+                   | SecurityProtocolType.Ssl3;
 
             ServicePointManager.Expect100Continue = true;
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls
