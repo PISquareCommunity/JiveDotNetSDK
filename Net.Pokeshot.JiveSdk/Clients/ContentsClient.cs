@@ -1431,7 +1431,7 @@ namespace Net.Pokeshot.JiveSdk.Clients
             }
 
             //converts the content into a JSON string and makes the HTTP request
-            string json = JsonConvert.SerializeObject(content, new JsonSerializerSettings { DefaultValueHandling = DefaultValueHandling.Ignore, Formatting = Formatting.Indented });
+            string json = JsonConvert.SerializeObject(content, new JsonSerializerSettings { DefaultValueHandling = DefaultValueHandling.Ignore, Formatting = Formatting.Indented, DateFormatString = "yyyy-MM-ddThh:mm:ss.FFF+0000" });
             string result;
             try
             {
